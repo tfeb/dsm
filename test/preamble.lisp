@@ -46,6 +46,11 @@
                        (length variables) (length values)))
         (values values nil))))))
 
+(defun vars/anons (ll)
+  (multiple-value-bind (parsed vars anons) (parse-lambda-list ll)
+    (declare (ignore parsed))
+    (values vars anons)))
+
 (define-test ("org.tfeb.dsm" "match-one")
   (is-values (match-one '(x) '(1))
     (equal '(1))

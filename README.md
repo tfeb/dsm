@@ -218,7 +218,7 @@ What constitutes a blank variable is parameterized internally and could be made 
 ## Package, module, feature, dependencies
 `dsm` lives in `org.tfeb.dsm` and provides `:org.tfeb.dsm`.  There is an ASDF system definition for both it and its tests.
 
-`dsm` depends on a fair number of other things I have written: if you have a recent Quicklisp distribution then it *should* know about all of them.  At least, by the time `dsm` makes it into Quicklisp it should.
+`dsm` depends on a fair number of other things I have written: if you have a recent Quicklisp distribution then it *should* know about all of them.  At least, by the time `dsm` makes it into Quicklisp it should.  If not, you need at least version 5 of [my CL hax](https://tfeb.github.io/tfeb-lisp-hax/ "TFEB.ORG Lisp hax"), and at least version 8 of [my CL tools](https://tfeb.github.io/tfeb-lisp-tools/ "TFEB.ORG Lisp tools").
 
 ---
 

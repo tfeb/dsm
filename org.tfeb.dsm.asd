@@ -36,7 +36,9 @@
   :components
   ((:file "pkg")
    (:file "preamble")
+   (:file "test-pll")
    (:file "test-ll")
+   (:file "test-dsm")
    (:file "test-bugs")))
 
 
