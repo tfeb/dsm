@@ -1,6 +1,9 @@
 ;;;; Package for DSM
 ;;;
-;;; (very preliminary)
+;;; This is enough for DSM, but only enough for it: very little is
+;;; exposed from the parser & compiler which would need to be be if
+;;; they were to be made more general: see comments in pll and cpll.
+;;;
 
 (in-package :cl-user)
 
@@ -28,7 +31,8 @@
    #:scold
    #:catastrophe
    #:parse-lambda-list
-   #:compile-parsed-lambda-list))
+   #:compile-parsed-lambda-list
+   #:compile-lambda-list))
 
 (defpackage :org.tfeb.dsm
   (:use :cl)

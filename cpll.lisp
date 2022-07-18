@@ -96,14 +96,21 @@
           (otherwise
            (not-for-variables d))))))
 
-(defun compile-parsed-lambda-list (pll decls/body &optional
+(defun compile-parsed-lambda-list (pll variables anonymous decls/body &optional
                                        (pll-compilers *pll-compilers*))
+  ;; compile a parsed lambda list, adding IGNORE declarations for
+  ;; ANONYMOUS, and using DECLS/BODY as the body. VARS is not used currently
+  (declare (ignore variables))
   (let ((<thing> (make-symbol "THING"))
         (<fail> (make-symbol "FAIL")))
     (multiple-value-bind (cdecls body)
         (multiple-value-bind (decls body)
             (parse-simple-body decls/body)
-          (values (canonicalize-declarations decls) body))
+          (values (append (mapcar (lambda (anon)
+                                    `(declare (ignore ,anon)))
+                                  anonymous)
+                          (canonicalize-declarations decls))
+                  body))
       `(lambda (,<thing> ,<fail>)
          ,(iterate crl ((pllt pll) (rdecls cdecls) (next nil))
             (matching pllt
@@ -151,6 +158,13 @@
               (otherwise
                ;; Can't happen absent bugs in parse-lambda-list
                (catastrophe "what even is ~S? (from ~S)" pllt pll))))))))
+
+(defun compile-lambda-list (ll decls/body &optional
+                               (pll-compilers *pll-compilers*))
+  ;; This just exists so destructuring-bind doesn't have to care about
+  ;; variables &c
+  (multiple-value-bind (pll variables anonymous) (parse-lambda-list ll)
+    (compile-parsed-lambda-list pll variables anonymous decls/body pll-compilers)))
 
 (defmacro define-pll-compiler (name/in (clause-body <thing> <fail>)
                                        &body decls/forms)

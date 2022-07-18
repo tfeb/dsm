@@ -7,11 +7,11 @@
 
 (defun match-one (lambda-list form &key (print-compiled nil)
                               (bindings '() bindingsp))
-  ;; Does FORM match LAMBDA-LIST return either a list of argument
+  ;; Does FORM match LAMBDA-LIST? Return either a list of argument
   ;; values and NIL, or NIL and a string describing something wrong.
   ;; If BINDINGS is given wrap this around the call.  On any kind of
   ;; compilation error or warning signal a catastrophe.
-  (multiple-value-bind (pll variables) (parse-lambda-list lambda-list)
+  (multiple-value-bind (pll variables anonymous) (parse-lambda-list lambda-list)
     (let* ((warnings '())
            (cpl (if bindingsp
                     (let ((<thing> (make-symbol "THING"))
@@ -19,10 +19,12 @@
                       `(lambda (,<thing> ,<fail>)
                          (let ,bindings
                            (,(compile-parsed-lambda-list
-                              pll `((list ,@variables)))
+                              pll variables anonymous
+                              `((list ,@variables)))
                             ,<thing> ,<fail>))))
                   (compile-parsed-lambda-list
-                              pll `((list ,@variables)))))
+                   pll variables anonymous
+                   `((list ,@variables)))))
            (f (handler-bind ((warning
                               (lambda (w)
                                 (push w warnings))))

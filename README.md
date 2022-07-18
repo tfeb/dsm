@@ -95,7 +95,10 @@ This is what `dsm` lets you do: it provides a macro, `destructuring-match`, whic
 - For `<lambda-list>` see below.
 - `<guard>` is a form like `(<when/unless) expression ...)`, where `<when/unless>` is `:when` or `:unless`.
 
-The lambda lists understood by `destructuring-match` are[^2] the same as the lambda lists understood by `destructuring-bind`, extended in one way: a 'lambda list' which is a symbol binds the whole value of the expression, in the same way that `(lambda x ...)` does in Scheme.
+The lambda lists understood by `destructuring-match` are[^2] the same as the lambda lists understood by `destructuring-bind`, extended in two ways:
+
+1. a 'lambda list' which is a symbol binds the whole value of the expression, in the same way that `(lambda x ...)` does in Scheme;
+2. any variable whose name is `_`, regardless of package, is a 'blank', and is turned into an anonymous variable which is ignored, with each occurrence of such a variable being distinct.
 
 The guards specified by a guard clause may be repeated, so `(:when ... :unless ... :when ...)` is perfectly legal.  Guards are evaluated after variables are bound but before the match is committed.  If the guards fail the next clause is tried.
 
@@ -112,7 +115,7 @@ In addition, `dsm` exposes three condition classes:
 
 Of course other errors may occur which it has not foreseen: report these too.
 
-## Two simple examples
+## Some simple examples
 ```lisp
 (defmacro bind (v/v &body forms)
   (destructuring-match v/v
@@ -151,6 +154,28 @@ is a trivial version of `let` which binds only one variable.
 
 is a more elaborate version of `let*`.
 
+An example of a blank variables: this function will extract a list of keyword variable names from the various possible keyword argument specifications allowed by CL:
+
+```lisp
+(defun keyword-variable-names (keyword-argument-specifications)
+  (mapcar (lambda (spec)
+            (destructuring-match spec
+              (v
+               (:when (symbolp v))
+               v)
+              ((v _ &optional _)
+               (:when (symbolp v))
+               v)
+              (((_ v) _ &optional _)
+               (:when (symbolp v))
+               v)
+              (otherwise
+               (error "not a keyword argument specification"))))
+          keyword-argument-specifications))
+```
+
+without blank variables something like this would need to be covered in explicit`ignore` declarations.
+
 ## Notes on the implementation
 ### Lambda lists
 `dsm` has to implement its own parsing and compilation of lambda lists.  It is intended to be compatible with `destructuring-bind` with the extension of 'lambda lists' which are a symbol.  However there are a lot of corner cases, especially around keyword handling: I *think* it gets these right but there may be bugs remaining: please let me know if you find any.
@@ -184,6 +209,11 @@ Other declaration types which affect variable bindings, such as `ignore`, `dynam
 I don't know whether `dsm`'s compiled lambda lists perform well or not: since it's intended for use in macros I made no real attempt to worry about performance.  Certainly it's unlikely that they perform as well as the system's implementation, but that was not the intention.
 
 'Lambda lists' which are symbols happened by mistake (there's what is essentially an error in the recognizer where it's looking for dotted lambda lists), but it is in fact so useful that I decided it was a feature, not a bug.
+
+## Lost futures
+`dsm` contains a lambda list parser and compiler which, in principle, are fairly general.  Cleaning up and exposing their interfaces was too exhausting when I was writing `dsm` but might happen in future.
+
+What constitutes a blank variable is parameterized internally and could be made user-configurable.  On the other hand everything uses `_`, so I am not sure  any useful purpose would be served by doing so.
 
 ## Package, module, feature, dependencies
 `dsm` lives in `org.tfeb.dsm` and provides `:org.tfeb.dsm`.  There is an ASDF system definition for both it and its tests.

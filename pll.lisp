@@ -398,17 +398,61 @@
            (t
             (values new-state new-llt))))))))
 
+(defvar *anonymous-variable-names* '("_")) ;could expose this
+
+(defun anonymize-variables (recognized-lambda-list &optional
+                                                   (anonymous-variable-names
+                                                    *anonymous-variable-names*))
+  ;; Return a copy of RECOGNIZED-LAMBDA-LIST with anonymous variables
+  ;; anonymized, and a list of the anonymized variables.  This shares
+  ;; too much code with the next function.
+  (let ((anonymous (make-collector)))
+    (flet ((anonymize (v)
+             (if (member (symbol-name v) anonymous-variable-names
+                         :test #'string=)
+                 (let ((va (make-symbol (symbol-name v))))
+                   (collect-into anonymous va)
+                   va)
+               v)))
+      (values
+       (iterate rla ((rll recognized-lambda-list))
+         (mapcar
+          (lambda (this)
+            (matching this
+              ((head-matches #'symbolp)
+               (case (first this)
+                 ((&whole &required &rest &aux)
+                  (destructuring-bind (llk v . more) this
+                    `(,llk ,(anonymize v) ,@more)))
+                 ((&optional)
+                  (destructuring-bind (v i vp) (rest this)
+                    `(&optional ,(anonymize v) ,i ,(anonymize vp))))
+                 ((&key)
+                  (destructuring-bind ((k v) i vp) (rest this)
+                    `(&key (,k ,(anonymize v)) ,i ,(anonymize vp))))
+                 ((&allow-other-keys)
+                  this)
+                 (otherwise
+                  (catastrophe "mutant recognized lambda list ~S at ~S"
+                               recognized-lambda-list this))))
+              (#'listp
+               (rla this))
+              (otherwise
+               (catastrophe "what even is ~S?" this))))
+          rll))
+       (collector-contents anonymous)))))
+
 (defun unique-variables (recognized-lambda-list)
-  ;; return a list of variables and a list of duplicates
+  ;; return a list of variables and a list of duplicates.  It is
+  ;; annoying this shares so much code with the previous function.
   (with-collectors (variable duplicate)
     (iterate rll ((rlt recognized-lambda-list)
                   (variables '()))
-      (if (null rlt)
-          variables
+      (unless (null rlt)
         (destructuring-bind (this . more) rlt
           (matching this
             ((head-matches #'symbolp)
-             (ecase (first this)
+             (case (first this)
                ((&whole &required &rest &aux)
                 (let ((v (second this)))
                   (if (member v variables)
@@ -442,7 +486,10 @@
                   (rll more
                        (if vp (list* vp v variables) (cons v variables)))))
                ((&allow-other-keys)
-                (rll more variables))))
+                (rll more variables))
+               (otherwise
+                (catastrophe "mutant recognized lambda list ~S at ~S"
+                             recognized-lambda-list this))))
             (#'listp
              (rll more (rll this variables)))
             (otherwise
@@ -502,14 +549,16 @@
            (rest rlt)))))))
 
 (defun parse-lambda-list (lambda-list &rest args &key &allow-other-keys)
-  ;; Return the parsed lambda list and a list of its variables
+  ;; Return the parsed lambda list, a list of its variables, and a
+  ;; list of anonymous variables.
   (let ((recognized (apply #'recognize-lambda-list lambda-list args)))
     (multiple-value-bind (ok problems) (validate-keywords recognized)
       (unless ok
         (scold "keyword troubles:~:{ ~S -> ~S~^,~}"
                (mapcar #'second problems))))
-    (multiple-value-bind (uniques duplicates) (unique-variables recognized)
-      (unless (null duplicates)
-        (scold "duplicate variable~P ~{~S~^, ~} in ~S"
-               (length duplicates) duplicates lambda-list))
-      (values (coalesce-keywords recognized) uniques))))
+    (multiple-value-bind (anonymized anonymous) (anonymize-variables recognized)
+      (multiple-value-bind (uniques duplicates) (unique-variables anonymized)
+        (unless (null duplicates)
+          (scold "duplicate variable~P ~{~S~^, ~} in ~S"
+                 (length duplicates) duplicates lambda-list))
+        (values (coalesce-keywords anonymized) uniques anonymous)))))

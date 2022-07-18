@@ -1,4 +1,4 @@
-;;;;
+;;;; Destructuring match
 ;;;
 
 (org.tfeb.tools.require-module:needs
@@ -13,7 +13,7 @@
         :compile t)
        ("cpll" :compile t))
 
-(provide-module :org.tfeb.dsm)
+(provides :org.tfeb.dsm)
 
 (defun compute-guard (clauses)
   (let ((effective
@@ -63,8 +63,8 @@
                          (let ((<next> (make-symbol "NEXT"))
                                (guard (compute-guard guard-clauses)))
                            (collect
-                            `(funcall ,(compile-parsed-lambda-list
-                                        (parse-lambda-list ll)
+                            `(funcall ,(compile-lambda-list
+                                        ll
                                         `(,@decls
                                           (if ,guard
                                               (multiple-value-call ,<done>
@@ -81,8 +81,8 @@
                            (parse-simple-body decls/body)
                          (let ((<next> (make-symbol "NEXT")))
                            (collect
-                            `(funcall ,(compile-parsed-lambda-list
-                                        (parse-lambda-list ll)
+                            `(funcall ,(compile-lambda-list
+                                        ll
                                         `(,@decls
                                           (multiple-value-call ,<done>
                                             (progn ,@body))))
