@@ -269,6 +269,7 @@
              ,@(collecting
                  (dolist (s suppliedps) (collect `(,s nil))))
              (,<allow-other-keys> nil))
+         (declare (ignorable ,<allow-other-keys>)) ;it may only be assigned to
          (do ((,<thing> ,<thing> (cddr ,<thing>)))
              ((null ,<thing>)
               (let* ,(mapcar (lambda (variable temporary initform suppliedp)
