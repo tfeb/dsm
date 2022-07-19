@@ -3,6 +3,10 @@
 
 (in-package :org.tfeb.dsm/test)
 
+(defvar *test-individually* nil)
+
+(defvar *test-report-class* 'summary)
+
 (define-test "org.tfeb.dsm")
 
 (defun match-one (lambda-list form &key (print-compiled nil)

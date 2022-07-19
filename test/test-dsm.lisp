@@ -16,15 +16,15 @@
   (true (destructuring-match 1
           (_ t))))
 
-#||
 (define-test ("org.tfeb.dsm.dsm" "error-checking")
   ;; I have no idea what is breaking this: parachute is broken somehow
   :compile-at :execute
-  (fail (destructuring-match 1 3) scold)
-  (fail (destructuring-match 1
-          (otherwise t)
-          (_ nil)) scold))
-||#
+  (fail (eval '(destructuring-match 1 3))
+        scold)
+  (fail (eval '(destructuring-match 1
+                 (otherwise t)
+                 (_ nil)))
+        scold))
 
 (define-test ("org.tfeb.dsm.dsm" "basic")
   (flet ((m (it)
@@ -69,4 +69,5 @@
                 ((_ _ _) nil)
                 (x x)))))
 
-(test "org.tfeb.dsm.dsm" :report 'summary)
+(when *test-individually*
+  (test "org.tfeb.dsm.dsm" :report *test-report-class*))

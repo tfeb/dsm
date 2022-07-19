@@ -28,5 +28,6 @@
                  '((n :b 3) (1 2 3) 4 5)))
   (is equal '(x y) (match-one '(((a)) b) '(((x)) y))))
 
-(test "org.tfeb.dsm.bugs" :report 'summary)
+(when *test-individually*
+  (test "org.tfeb.dsm.bugs" :report *test-report-class*))
 

@@ -26,4 +26,5 @@
                  anons))
     (false (member '_ anons))))
 
-(test "org.tfeb.dsm.pll" :report 'summary)
+(when *test-individually*
+  (test "org.tfeb.dsm.pll" :report *test-report-class*))

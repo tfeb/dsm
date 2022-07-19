@@ -131,4 +131,5 @@
   (is equal '(1 2) (match-one '(x &aux (y 2)) '(1)))
   (is equal '(1 1) (match-one '(x &aux (y x)) '(1))))
 
-(test "org.tfeb.dsm.ll" :report 'summary)
+(when *test-individually*
+  (test "org.tfeb.dsm.ll" :report *test-report-class*))

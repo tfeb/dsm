@@ -39,6 +39,5 @@
    (:file "test-pll")
    (:file "test-ll")
    (:file "test-dsm")
-   (:file "test-bugs")))
-
-
+   (:file "test-bugs")
+   (:file "test-all")))
