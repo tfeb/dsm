@@ -268,8 +268,8 @@
                  (dolist (tv temporaries) (collect `(,tv nil))))
              ,@(collecting
                  (dolist (s suppliedps) (collect `(,s nil))))
-             (,<allow-other-keys> nil))
-         (declare (ignorable ,<allow-other-keys>)) ;it may only be assigned to
+             ,@(if (not allow-other-keys)
+                   `((,<allow-other-keys> nil))))
          (do ((,<thing> ,<thing> (cddr ,<thing>)))
              ((null ,<thing>)
               (let* ,(mapcar (lambda (variable temporary initform suppliedp)
@@ -283,7 +283,10 @@
             ((null (rest ,<thing>))
              (fail ,<fail> "odd number of keyword arguments")))
            (case (first ,<thing>)
-             ((:allow-other-keys) (setf ,<allow-other-keys> (second ,<thing>)))
+             ,@(if (not allow-other-keys)
+                   `(((:allow-other-keys)
+                      (setf ,<allow-other-keys> (second ,<thing>))))
+                 ())
              ,@(mapcar (lambda (keyword temporary suppliedp)
                          `((,keyword)
                            (unless ,suppliedp
