@@ -17,8 +17,7 @@
           (_ t))))
 
 (define-test ("org.tfeb.dsm.dsm" "error-checking")
-  ;; I have no idea what is breaking this: parachute is broken somehow
-  :compile-at :execute
+  ;; This is a horrible hack, but it's the easiest way
   (fail (eval '(destructuring-match 1 3))
         scold)
   (fail (eval '(destructuring-match 1

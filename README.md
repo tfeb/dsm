@@ -176,6 +176,39 @@ An example of a blank variables: this function will extract a list of keyword va
 
 without blank variables something like this would need to be covered in explicit`ignore` declarations.
 
+## Another example: `define-destructuring-macro`
+`destructuring-match` was designed for writing macros, and it's easy to use it to write this[^3]:
+
+```lisp
+(defmacro define-matching-macro (name &body clauses)
+  (let ((<whole> (make-symbol "WHOLE"))
+        (<junk> (make-symbol "JUNK")))
+    (multiple-value-bind (doc the-clauses)
+        (if (stringp (first clauses))
+            (values (first clauses) (rest clauses))
+          (values nil clauses))
+      `(defmacro ,name (&whole ,<whole> &rest ,<junk>)
+         ,@(if doc (list doc) '())
+         (declare (ignore ,<junk>))
+         (destructuring-match ,<whole> ,@the-clauses)))))
+```
+
+This can then be used, for instance, like this:
+
+```lisp
+(define-matching-macro with-scrot
+ ((_ (s) &body forms)
+  (:when (symbolp s))
+  `(call-with-simple-scrot (lambda (,s) ,@forms)))
+ ((_ (s v) &body forms)
+  (:when (symbolp s))
+  `(call-with-general-scrot (lambda (,s) ,@forms) (ensure-scrot ,v)))
+ (badness
+  (error "~S is a bad bad thing" badness)))
+```
+
+So now it's very easy to write macros which accept a number of argument patterns and which can also report syntax errors in a useful way.
+
 ## Notes on the implementation
 ### Lambda lists
 `dsm` has to implement its own parsing and compilation of lambda lists.  It is intended to be compatible with `destructuring-bind` with the extension of 'lambda lists' which are a symbol.  However there are a lot of corner cases, especially around keyword handling: I *think* it gets these right but there may be bugs remaining: please let me know if you find any.
@@ -195,9 +228,21 @@ Declarations are 'raised' to where they belong by the compiler, so something lik
 
 Will do the right thing, and  the guard clause will be within the scope of the declaration.
 
-However, **no attempt is made to recognise the alternative form of type declarations**: `(declare (integer y))` is simply not recognised at all.  That's because it's essentially not possible to reliably recognise that declarations of the form `(<something> ...)` are in fact type declarations at all because CL has no 'is this a type specifier?' predicate.  So if you want to declare types, use the long form[^3].
+However, **no attempt is made to recognise the alternative form of type declarations**: `(declare (integer y))` is simply not recognised at all.  That's because it's essentially not possible to reliably recognise that declarations of the form `(<something> ...)` are in fact type declarations at all because CL has no 'is this a type specifier?' predicate.  So if you want to declare types, use the long form[^4].
 
 Other declaration types which affect variable bindings, such as `ignore`, `dynamic-extent` and so on, are also raised.
+
+### Dead code
+`dsm` can generate code like this as a particular case (this often happens when using `&rest` lists in particular):
+
+```lisp
+(let ((x '()))
+  (if (not (null x))
+      (fail ...)
+      ...))
+```
+
+This can cause SBCL at least to mutter about eliminating dead code: I decided that the additional complexity to deal with this special case wasn't worth it: probably any serious compiler will work it out and remove the test.
 
 ### The lambda list parser & compiler
 `dsm` contains the seeds of what could be a general-purpose lambda list parser & compiler, which could, in theory, be taught how to parse & compile other sorts of lambda lists, including lambda lists not native to CL.  At present these are not well-separated from the code that recognizes and compiles `destructuring-bind`-style lambda lists, but they might one day be.
@@ -228,4 +273,6 @@ Destructuring match is copyright 2022 by Tim Bradshaw.  See `LICENSE` for the li
 
 [^2]:	Or should be!
 
-[^3]:	I think you should always do this, anyway.
+[^3]:	Note that this is 11 lines, including the code to handle docstrings, which is 5 of those lines.
+
+[^4]:	I think you should always do this, anyway.
