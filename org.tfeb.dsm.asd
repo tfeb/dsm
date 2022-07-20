@@ -41,3 +41,14 @@
    (:file "test-dsm")
    (:file "test-bugs")
    (:file "test-all")))
+
+(defsystem "org.tfeb.dsm/bench"
+  :description "Destructuring match benchmarks"
+  :version "1.0.0"
+  :author "Tim Bradshaw"
+  :license "MIT"
+  :homepage "https://github.com/tfeb/dsm"
+  :depends-on ("org.tfeb.dsm")
+  :pathname "bench/"
+  :components
+  ((:file "bench")))
