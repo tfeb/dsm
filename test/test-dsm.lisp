@@ -68,5 +68,21 @@
                 ((_ _ _) nil)
                 (x x)))))
 
+(define-test ("org.tfeb.dsm.dsm" "semantics")
+  (let ((it '(1 2 3 4)))
+    (is eq it (destructuring-match it
+                ((&rest r) r)))
+    (is eq (rest it) (destructuring-match it
+                       ((_ &rest r) r)))
+    (is eq (rest it) (destructuring-match it
+                       ((_ . r) r))))
+  (let ((dit '(1 2 . 3)))
+    (is eq dit (destructuring-match dit
+                 ((&rest r) r)))
+    (is eql 3 (destructuring-match dit
+              ((_ _ &rest r) r))))
+  (is eql 1 (destructuring-match 1
+              ((&rest r) r))))
+
 (when *test-individually*
   (test "org.tfeb.dsm.dsm" :report *test-report-class*))

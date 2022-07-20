@@ -52,6 +52,7 @@
 (defvar *descriptions*
   '(((a b c d) (1 2 3 4) (+ a b c d))
     ((&rest l) (1 2 3 4) l)
+    ((a &rest b) (1 2 3 4) (declare (ignore a)) b)
     ((&key a b c d) (:a 1 :b 2 :c 3 :d 4) (+ a b c d))
     ((&key a b c d) (:d 1 :c 2 :b 3 :a 4) (+ a b c d))
     ((&key a &allow-other-keys) (:a 1 :b 2 :c 3 :d 4) a)

@@ -1,7 +1,7 @@
 # Destructuring match
 Common Lisp doesn't have any pattern-matching facilities in the language.  A number have been written: [CLiki](https://www.cliki.net/pattern%20matching "CLiki pattern matching") has a list: Marco Antoniotti's [CL-UNIFICATION](https://gitlab.common-lisp.net/cl-unification/cl-unification "CL-UNIFICATION") is my favourite, as I used to be interested in unification grammars.  Many of these systems are quite general: they seek to be able to match very general objects.  This causes inevitable hair in their implementations, and also means that they often make doing something rather simple much harder than it needs to be.
 
-That simple thing, for me, is a generalised version of `destructuring-bind`or, equivalently, macro argument lists.  As an example, let's consider a macro where there are a few possible variations on the syntax:
+That simple thing is a generalised version of `destructuring-bind`or, equivalently[^1], macro argument lists.  As an example, let's consider a macro where there are a few possible variations on the syntax:
 
 ```lisp
 (with-foo x ... use x ...)
@@ -75,7 +75,7 @@ The underlying problem here is that, before you can use `destructuring-bind` you
 
 This is what `dsm` lets you do: it provides a macro, `destructuring-match`, which understands lambda lists similar to `destructuring-bind`s although slightly extended, except that it it also matches against many possible lambda lists, and that matches can have 'guard clauses' which allow arbitrary additional tests before a match succeeds.
 
-`dsm` is not intended as a general-purpose pattern matcher: all it does is allow matching against many possible lambda lists, succeeding on the first match.  Guard clauses allow some additional tests before a match succeeds, but that's it.  The best way to understand `dsm` is that it's a *tool for writing macros*: it's not anything more general than that.  But as a tool for writing macros it can make your life a *lot* easier.  It would be relatively simple to implement, on top of `destructuring-match`, a pattern-matching macro language like Scheme's `syntax-rules`although without hygiene of course[^1].
+`dsm` is not intended as a general-purpose pattern matcher: all it does is allow matching against many possible lambda lists, succeeding on the first match.  Guard clauses allow some additional tests before a match succeeds, but that's it.  The best way to understand `dsm` is that it's a *tool for writing macros*: it's not anything more general than that.  But as a tool for writing macros it can make your life a *lot* easier.  It would be relatively simple to implement, on top of `destructuring-match`, a pattern-matching macro language like Scheme's `syntax-rules`although without hygiene of course[^2].
 
 ## The interface
 `dsm` provides a single macro: `destructuring-match`.
@@ -95,7 +95,7 @@ This is what `dsm` lets you do: it provides a macro, `destructuring-match`, whic
 - For `<lambda-list>` see below.
 - `<guard>` is a form like `(<when/unless) expression ...)`, where `<when/unless>` is `:when` or `:unless`.
 
-The lambda lists understood by `destructuring-match` are[^2] the same as the lambda lists understood by `destructuring-bind`, extended in two ways:
+The lambda lists understood by `destructuring-match` are[^3] the same as the lambda lists understood by `destructuring-bind`, extended in two ways:
 
 1. a 'lambda list' which is a symbol binds the whole value of the expression, in the same way that `(lambda x ...)` does in Scheme;
 2. any variable whose name is `_`, regardless of package, is a 'blank', and is turned into an anonymous variable which is ignored, with each occurrence of such a variable being distinct.
@@ -177,7 +177,7 @@ An example of a blank variables: this function will extract a list of keyword va
 without blank variables something like this would need to be covered in explicit`ignore` declarations.
 
 ## Another example: `define-destructuring-macro`
-`destructuring-match` was designed for writing macros, and it's easy to use it to write this[^3]:
+`destructuring-match` was designed for writing macros, and it's easy to use it to write this[^4]:
 
 ```lisp
 (defmacro define-matching-macro (name &body clauses)
@@ -215,6 +215,28 @@ So now it's very easy to write macros which accept a number of argument patterns
 
 There is a fairly extensive test-suite included with `dem` which tests quite a lot of the corner cases, but it is not completely comprehensive and I may also just not understand a lot of the corner cases of lambda list parsing.
 
+### Structure sharing
+When `dsm` binds a variable to an object which is part of the structure of the lambda list, that object will actually be part of that structure.  So, for instance
+
+```lisp
+(let ((l '(a b c)))
+  (destructuring-match l
+    ((&rest r)
+     (eq l r))))
+```
+
+will be true.
+
+### `&rest` lists may not be
+A lambda list like `(a &rest b)` just peels off the first element of the thing it's matching for `a` and then puts everything else in `b`: that may not be a proper list or even a cons.  in particular
+
+| this                | is the same as this |
+| ------------------- | ------------------- |
+| `(a b ... &rest c)` | `(a b ... . c)`     |
+| `(&rest r)`         | `r`                 |
+
+and so on.  Checking `&rest` lists are in fact proper lists is expensive and probably not actually useful since it would make cyclic structures impossible to match, so `dsm` does not waste time doing so.
+
 ### Declarations
 Declarations are 'raised' to where they belong by the compiler, so something like
 
@@ -228,7 +250,7 @@ Declarations are 'raised' to where they belong by the compiler, so something lik
 
 Will do the right thing, and  the guard clause will be within the scope of the declaration.
 
-However, **no attempt is made to recognise the alternative form of type declarations**: `(declare (integer y))` is simply not recognised at all.  That's because it's essentially not possible to reliably recognise that declarations of the form `(<something> ...)` are in fact type declarations at all because CL has no 'is this a type specifier?' predicate.  So if you want to declare types, use the long form[^4].
+However, **no attempt is made to recognise the alternative form of type declarations**: `(declare (integer y))` is simply not recognised at all.  That's because it's essentially not possible to reliably recognise that declarations of the form `(<something> ...)` are in fact type declarations at all because CL has no 'is this a type specifier?' predicate.  So if you want to declare types, use the long form[^5].
 
 Other declaration types which affect variable bindings, such as `ignore`, `dynamic-extent` and so on, are also raised.
 
@@ -247,12 +269,13 @@ This can cause SBCL at least to mutter about eliminating dead code: I decided th
 ### The lambda list parser & compiler
 `dsm` contains the seeds of what could be a general-purpose lambda list parser & compiler, which could, in theory, be taught how to parse & compile other sorts of lambda lists, including lambda lists not native to CL.  At present these are not well-separated from the code that recognizes and compiles `destructuring-bind`-style lambda lists, but they might one day be.
 
+### Performance
+Since `dsm` is intended for use in macros I made no real attempt to worry about performance.  There is a small set of rudimentary benchmarks which compare its performance with `destructuring-bind` for various cases: the results are obviously implementation-dependent but generally it seems to be between aboit 1/2 and 1/10 the speed.  Given that it's portable code I'm happy with this.
+
 ### Layers
 `dsm` contains an 'implementation' layer which has its own package, and which may one day expose more of it with some documented interface.  Currently this interface is entirely internal to `dsm` and may change at any time.
 
 ## Other notes
-I don't know whether `dsm`'s compiled lambda lists perform well or not: since it's intended for use in macros I made no real attempt to worry about performance.  Certainly it's unlikely that they perform as well as the system's implementation, but that was not the intention.
-
 'Lambda lists' which are symbols happened by mistake (there's what is essentially an error in the recognizer where it's looking for dotted lambda lists), but it is in fact so useful that I decided it was a feature, not a bug.
 
 ## Lost futures
@@ -269,10 +292,12 @@ What constitutes a blank variable is parameterized internally and could be made 
 
 Destructuring match is copyright 2022 by Tim Bradshaw.  See `LICENSE` for the license.
 
-[^1]:	A toy version of a macro to define pattern-matching macros like this is included as an example.
+[^1]:	Almost equivalently: neither `destructuring-bind` not `destructuring-match` support the `&environment` lambda list keyword.
 
-[^2]:	Or should be!
+[^2]:	A toy version of a macro to define pattern-matching macros like this is included as an example.
 
-[^3]:	Note that this is 11 lines, including the code to handle docstrings, which is 5 of those lines.
+[^3]:	Or should be!
 
-[^4]:	I think you should always do this, anyway.
+[^4]:	Note that this is 11 lines, including the code to handle docstrings, which is 5 of those lines.
+
+[^5]:	I think you should always do this, anyway.
