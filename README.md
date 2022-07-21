@@ -1,7 +1,10 @@
 # Destructuring match
-Common Lisp doesn't have any pattern-matching facilities in the language.  A number have been written: [CLiki](https://www.cliki.net/pattern%20matching "CLiki pattern matching") has a list: Marco Antoniotti's [CL-UNIFICATION](https://gitlab.common-lisp.net/cl-unification/cl-unification "CL-UNIFICATION") is my favourite, as I used to be interested in unification grammars.  Many of these systems are quite general: they seek to be able to match very general objects.  This causes inevitable hair in their implementations, and also means that they often make doing something rather simple much harder than it needs to be.
+Common Lisp doesn't have any pattern-matching facilities in the language.  A number have been written: [CLiki](https://www.cliki.net/pattern%20matching "CLiki pattern matching") has a list: Marco Antoniotti's [CL-UNIFICATION](https://gitlab.common-lisp.net/cl-unification/cl-unification "CL-UNIFICATION") is my favourite, as I used to be interested in unification grammars.  Many of these systems are quite general: they seek to be able to match very general objects to be extensible and to have very good performance.  This causes inevitable hair in their implementations, and also means that they often make doing something rather simple much harder than it needs to be.
 
-That simple thing is a generalised version of `destructuring-bind`or, equivalently[^1], macro argument lists.  As an example, let's consider a macro where there are a few possible variations on the syntax:
+That simple thing is to provide a generalised version of `destructuring-bind`or, equivalently[^1], macro argument lists.  That's what `dsm` does, and that's *all* it does: if you understand `destructuring-bind` and `case` you can pretty much stop reading now: `destructuring-match` is pretty much `case` except that the cases are lambda lists for `destructuring-bind`.  `dsm` also does not care about performance, since the performance of macroexpansion never matters.
+
+## An example
+As an example, let's consider a macro where there are a few possible variations on the syntax:
 
 ```lisp
 (with-foo x ... use x ...)
@@ -75,7 +78,7 @@ The underlying problem here is that, before you can use `destructuring-bind` you
 
 This is what `dsm` lets you do: it provides a macro, `destructuring-match`, which understands lambda lists similar to `destructuring-bind`s although slightly extended, except that it it also matches against many possible lambda lists, and that matches can have 'guard clauses' which allow arbitrary additional tests before a match succeeds.
 
-`dsm` is not intended as a general-purpose pattern matcher: all it does is allow matching against many possible lambda lists, succeeding on the first match.  Guard clauses allow some additional tests before a match succeeds, but that's it.  The best way to understand `dsm` is that it's a *tool for writing macros*: it's not anything more general than that.  But as a tool for writing macros it can make your life a *lot* easier.  It would be relatively simple to implement, on top of `destructuring-match`, a pattern-matching macro language like Scheme's `syntax-rules`although without hygiene of course[^2].
+Again,`dsm` is not intended as a general-purpose pattern matcher: all it does is allow matching against many possible lambda lists, succeeding on the first match.  Guard clauses allow some additional tests before a match succeeds, but that's it.  The best way to understand `dsm` is that it's a *tool for writing macros*: it's not anything more general than that.  But as a tool for writing macros it can make your life a *lot* easier.  It would be relatively simple to implement, on top of `destructuring-match`, a pattern-matching macro language like Scheme's `syntax-rules`although without hygiene of course[^2].
 
 ## The interface
 `dsm` provides a single macro: `destructuring-match`.

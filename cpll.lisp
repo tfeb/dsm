@@ -48,6 +48,7 @@
        (t
         (cdr compilers))))))
 
+(declaim (inline fail))                 ;save a funcall
 (defun fail (failure-continuation &optional (argument "failed") &rest args)
   (funcall failure-continuation argument args))
 
