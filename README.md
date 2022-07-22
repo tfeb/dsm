@@ -186,14 +186,15 @@ without blank variables something like this would need to be covered in explicit
 (defmacro define-matching-macro (name &body clauses)
   (let ((<whole> (make-symbol "WHOLE"))
         (<junk> (make-symbol "JUNK")))
-    (multiple-value-bind (doc the-clauses)
-        (if (stringp (first clauses))
-            (values (first clauses) (rest clauses))
-          (values nil clauses))
-      `(defmacro ,name (&whole ,<whole> &rest ,<junk>)
-         ,@(if doc (list doc) '())
-         (declare (ignore ,<junk>))
-         (destructuring-match ,<whole> ,@the-clauses)))))
+    (destructuring-match clauses
+      ((doc . the-clauses)
+       (:when (stringp doc))
+       `(defmacro ,name (&whole ,<whole> &rest ,<junk>)
+          ,doc
+          (destructuring-match ,<whole> ,@the-clauses)))
+      (the-clauses
+       `(defmacro ,name (&whole ,<whole> &rest ,<junk>)
+          (destructuring-match ,<whole> ,@the-clauses))))))
 ```
 
 This can then be used, for instance, like this:
@@ -301,6 +302,6 @@ Destructuring match is copyright 2022 by Tim Bradshaw.  See `LICENSE` for the li
 
 [^3]:	Or should be!
 
-[^4]:	Note that this is 11 lines, including the code to handle docstrings, which is 5 of those lines.
+[^4]:	Note that this is 12 lines, 6 of which is code to handle docstrings.
 
 [^5]:	I think you should always do this, anyway.

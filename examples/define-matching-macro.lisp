@@ -5,14 +5,15 @@
 (defmacro define-matching-macro (name &body clauses)
   (let ((<whole> (make-symbol "WHOLE"))
         (<junk> (make-symbol "JUNK")))
-    (multiple-value-bind (doc the-clauses)
-        (if (stringp (first clauses)) 
-            (values (first clauses) (rest clauses))
-          (values nil clauses))
-      `(defmacro ,name (&whole ,<whole> &rest ,<junk>)
-         ,@(if doc (list doc) '())
-         (declare (ignore ,<junk>))
-         (destructuring-match ,<whole> ,@the-clauses)))))
+    (destructuring-match clauses
+      ((doc . the-clauses)
+       (:when (stringp doc))
+       `(defmacro ,name (&whole ,<whole> &rest ,<junk>)
+          ,doc
+          (destructuring-match ,<whole> ,@the-clauses)))
+      (the-clauses
+       `(defmacro ,name (&whole ,<whole> &rest ,<junk>)
+          (destructuring-match ,<whole> ,@the-clauses))))))
 
 (define-matching-macro bind*
   ((_ () . forms)
