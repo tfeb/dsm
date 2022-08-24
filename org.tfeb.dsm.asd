@@ -5,7 +5,7 @@
 
 (defsystem "org.tfeb.dsm"
   :description "Destructuring match"
-  :version "1.0.0"
+  :version "1.2.0"
   :author "Tim Bradshaw"
   :license "MIT"
   :homepage "https://github.com/tfeb/dsm"
@@ -26,7 +26,7 @@
 
 (defsystem "org.tfeb.dsm/test"
   :description "Destructuring match tests"
-  :version "1.0.0"
+  :version "1.2.0"
   :author "Tim Bradshaw"
   :license "MIT"
   :homepage "https://github.com/tfeb/dsm"
@@ -44,7 +44,7 @@
 
 (defsystem "org.tfeb.dsm/bench"
   :description "Destructuring match benchmarks"
-  :version "1.0.0"
+  :version "1.2.0"
   :author "Tim Bradshaw"
   :license "MIT"
   :homepage "https://github.com/tfeb/dsm"
