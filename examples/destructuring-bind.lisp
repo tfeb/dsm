@@ -25,8 +25,7 @@
   ())
 
 (defmacro destructuring-bind (lambda-list form &body decls/forms)
-  `(funcall
-    ,(compile-lambda-list lambda-list decls/forms)
+  `(,(compile-lambda-list lambda-list decls/forms)
     ,form
     (lambda (message arguments)
       (error 'dsb-error
