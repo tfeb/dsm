@@ -215,6 +215,21 @@ This can then be used, for instance, like this:
 
 So now it's very easy to write macros which accept several argument patterns and which can also report syntax errors usefully.
 
+## A final example: `destructuring-bind`
+My friend Zyni[^6] pointed out to me that, of course, `destructuring-match` can implement `destructuring-bind`.  This implementation (due to her) may not be completely correct but it gets the point across:
+
+```lisp
+(defmacro destructuring-bind (ll form &body decls/forms)
+  (multiple-value-bind (decls forms) (parse-simple-body decls/forms)
+    `(destructuring-match ,form
+       (,ll
+        ,@decls
+        (progn ,@forms)))
+    (otherwise (error "fleașcă"))))
+```
+
+(The reason to parse the declarations out like this is so you don't have to think about bodies which look like `((:when ...) ...)` and worry about whether`:when`or `:unless` are legal operator names.  `parse-simple-body` comes from `org.tfeb.hax.utilities`.)
+
 ## Notes on the implementation
 ### Lambda lists
 `dsm` has to implement its own parsing and compilation of lambda lists.  It is intended to be compatible with `destructuring-bind` with the extension of 'lambda lists' which are a symbol.  However there are many corner cases, especially around keyword handling: I *think* it gets these right, but there may be bugs remaining: please let me know if you find any.
@@ -256,7 +271,7 @@ Declarations are 'raised' to where they belong by the compiler, so something lik
 
 Will do the right thing, and the guard clause will be within the scope of the declaration.
 
-However, **no attempt is made to recognise the alternative form of type declarations**: `(declare (integer y))` is simply not recognised at all.  That's because it's essentially not possible to reliably recognise that declarations of the form `(<something> ...)` are in fact type declarations at all because CL has no 'is this a type specifier?' predicate.  So if you want to declare types, use the long form[^6].
+However, **no attempt is made to recognise the alternative form of type declarations**: `(declare (integer y))` is simply not recognised at all.  That's because it's essentially not possible to reliably recognise that declarations of the form `(<something> ...)` are in fact type declarations at all because CL has no 'is this a type specifier?' predicate.  So if you want to declare types, use the long form[^7].
 
 Other declaration types which affect variable bindings, such as `ignore`, `dynamic-extent` and so on, are also raised.
 
@@ -276,7 +291,7 @@ This can cause SBCL at least to mutter about eliminating dead code: I decided th
 `dsm` contains the seeds of what could be a general-purpose lambda list parser & compiler, which could, in theory, be taught how to parse & compile other sorts of lambda lists, including lambda lists not native to CL.  At present these are not well-separated from the code that recognizes and compiles `destructuring-bind`-style lambda lists, but they might one day be.
 
 ### Performance
-Since `dsm` is intended for use in macros I made no real attempt to worry about performance.  There is a small set of rudimentary benchmarks which compare its performance with `destructuring-bind` for various cases: the results are obviously implementation-dependent, but generally it seems to be between about 1/2 and 1/10 the speed.  Given that it's portable code I'm happy with this[^7].
+Since `dsm` is intended for use in macros I made no real attempt to worry about performance.  There is a small set of rudimentary benchmarks which compare its performance with `destructuring-bind` for various cases: the results are obviously implementation-dependent, but generally it seems to be between about 1/2 and 1/10 the speed.  Given that it's portable code I'm happy with this[^8].
 
 ### Layers
 `dsm` contains an 'implementation' layer which has its own package, and which may one day expose more of it with some documented interface.  Currently this interface is entirely internal to `dsm` and may change at any time.
@@ -308,6 +323,8 @@ Destructuring match is copyright 2022 by Tim Bradshaw.  See `LICENSE` for the li
 
 [^5]:	Note that this is 12 lines, 6 of which is code to handle docstrings.
 
-[^6]:	I think you should always do this, anyway.
+[^6]:	Not her real name.
 
-[^7]:	Apocryphally it also outperforms some of those hairy pattern matchers which obsess about performance, although they obviously do a lot more than `dsm` does.
+[^7]:	I think you should always do this, anyway.
+
+[^8]:	Apocryphally it also outperforms some of those hairy pattern matchers which obsess about performance, although they obviously do a lot more than `dsm` does.
