@@ -17,7 +17,7 @@
   ())
 
 (define-condition dsm-error/mine (dsm-error)
-  ;; Errors which are my fault
+  ;; Errors which I think are my fault
   ())
 
 (define-condition catastrophe (dsm-error/mine simple-error)
@@ -33,7 +33,8 @@
   ()) 
 
 (defun scold (control &rest arguments)
-  ;; Something bad which is not really my fault (at least: it is nt
+  ;; Something bad which is not really my fault (at least: I am going
+  ;; to blame someone else)
   (error 'scold
          :format-control control
          :format-arguments arguments))

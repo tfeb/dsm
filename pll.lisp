@@ -140,11 +140,21 @@
 
 ;;; Recognizing lambda lists for destrucuring-bind
 ;;;
-;;; From CLHS, with fixes
+;;; From CLHS 3.4.5, with corrections
 ;;;
 ;;; lambda-list   ::= (wholevar reqvars optvars restvar keyvars auxvars) |
 ;;;                   (wholevar reqvars optvars . var)
 ;;; reqvars       ::= {var|lambda-list}*
+;;; optvars       ::= [&optional {var | (var [init-form [supplied-p-parameter]])}*]
+;;; restvar       ::= [{&rest | &body} var]
+;;; keyvars       ::= [&key {var | ({var | (keyword-name var)}
+;;;                                 [init-form [supplied-p-parameter]])}*
+;;;                    [&allow-other-keys]]
+;;; auxvars       ::= [&aux {var | (var [init-form])}*]
+;;; wholevar      ::= [&whole var]
+;;; envvar        ::= [&environment var]
+;;;
+;;; Note envvar is unused: I've left it in for completeness.
 ;;;
 
 ;;; It would be a good thing if the structures this built were so
