@@ -1,18 +1,16 @@
 ;;;; Parsed lambda list compiler
 ;;;
 
+#+org.tfeb.tools.require-module
 (org.tfeb.tools.require-module:needs
- ("pkg" :compile t))
+ ((:org.tfeb.hax.simple-loops
+   :org.tfeb.hax.utilities
+   :org.tfeb.hax.collecting)
+  :compile t)
+ (:org.tfeb.hax.spam :compile t)
+ (("pkg" "pll") :compile t))
 
 (in-package :org.tfeb.dsm/impl)
-
-(needs ((:org.tfeb.hax.simple-loops
-         :org.tfeb.hax.utilities
-         :org.tfeb.hax.collecting)
-        :compile t :use t)
-       (:org.tfeb.hax.spam :compile t :use t)
-       ("low" :compile t)
-       ("pll" :compile t))
 
 ;;; Again, the first part of this file is in principle a
 ;;; general-purpose thing, but in pracice it's only ever been used for

@@ -1,6 +1,7 @@
 ;;;; DSM low-level
 ;;;
 
+#+org.tfeb.tools.require-module
 (org.tfeb.tools.require-module:needs
  ("pkg" :compile t))
 

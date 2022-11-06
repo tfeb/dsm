@@ -5,18 +5,17 @@
 ;;; Note that priorities are not now used and could go.
 ;;;
 
+#+org.tfeb.tools.require-module
 (org.tfeb.tools.require-module:needs
- ("pkg" :compile t))
-
-(in-package :org.tfeb.dsm/impl)
-
-(needs ((:org.tfeb.hax.collecting
+ ((:org.tfeb.hax.collecting
          :org.tfeb.hax.iterate
          :org.tfeb.hax.simple-loops
          :org.tfeb.hax.utilities
          :org.tfeb.hax.spam)
         :compile t)
-       ("low" :compile t))
+ (("pkg" "low") :compile t))
+
+(in-package :org.tfeb.dsm/impl)
 
 ;;; In principle the first part of this file is general-purpose: you
 ;;; could use it by binding *states*, *initial-state*, *final-state*

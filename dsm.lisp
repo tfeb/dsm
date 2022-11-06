@@ -1,19 +1,21 @@
 ;;;; Destructuring match
 ;;;
 
-(org.tfeb.tools.require-module:needs
- ("pkg" :compile t))
+#+org.tfeb.tools.require-module
+(progn
+  (org.tfeb.tools.require-module:needs
+   ((:org.tfeb.hax.collecting
+     :org.tfeb.hax.utilities
+     :org.tfeb.hax.simple-loops
+     :org.tfeb.hax.spam)
+    :compile t)
+   (("pkg" "cpll") :compile t))
+  (org.tfeb.tools.require-module:provides :org.tfeb.dsm))
+
+#-org.tfeb.tools.require-module
+(provide :org.tfeb.dsm)
 
 (in-package :org.tfeb.dsm)
-
-(needs ((:org.tfeb.hax.collecting
-         :org.tfeb.hax.utilities
-         :org.tfeb.hax.simple-loops
-         :org.tfeb.hax.spam)
-        :compile t)
-       ("cpll" :compile t))
-
-(provides :org.tfeb.dsm)
 
 (defun compute-guard (clauses)
   (let ((effective

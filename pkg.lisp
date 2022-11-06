@@ -7,6 +7,7 @@
 
 (in-package :cl-user)
 
+#+org.tfeb.tools.require-module
 (org.tfeb.tools.require-module:needs
  ((:org.tfeb.hax.collecting
    :org.tfeb.hax.iterate
@@ -18,7 +19,6 @@
 (defpackage :org.tfeb.dsm/impl
   (:use :cl)
   (:use
-   :org.tfeb.tools.require-module
    :org.tfeb.hax.collecting
    :org.tfeb.hax.iterate
    :org.tfeb.hax.simple-loops
@@ -37,7 +37,6 @@
 (defpackage :org.tfeb.dsm
   (:use :cl)
   (:use
-   :org.tfeb.tools.require-module
    :org.tfeb.hax.collecting
    :org.tfeb.hax.utilities
    :org.tfeb.hax.simple-loops
