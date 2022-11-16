@@ -1,6 +1,7 @@
 ;;;; Some simple benchmarks for dsm
 ;;;
 
+#+org.tfeb.tools.require-module
 (org.tfeb.tools.require-module:needs
  (:org.tfeb.dsm :compile t))
 

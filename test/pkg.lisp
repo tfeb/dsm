@@ -3,6 +3,7 @@
 
 (in-package :cl-user)
 
+#+org.tfeb.tools.require-module
 (org.tfeb.tools.require-module:needs
  (:org.tfeb.dsm :compile t)
  ("parachute"))
