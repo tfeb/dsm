@@ -19,7 +19,7 @@
              `(lambda (,<thing> ,<iterations>)
                 (declare (type fixnum ,<iterations>))
                 ,@(if optimizep
-                      `((declare (optimize ,optimize)))
+                      `((declare (optimize ,@optimize)))
                     ())
                 (let ((,<start> (get-internal-run-time)))
                   (dotimes (,<i> ,<iterations> (/ (- (get-internal-run-time)
@@ -37,7 +37,7 @@
              `(lambda (,<thing> ,<iterations>)
                 (declare (type fixnum ,<iterations>))
                 ,@(if optimizep
-                      `((declare (optimize ,optimize)))
+                      `((declare (optimize ,@optimize)))
                     ())
                 (let ((,<start> (get-internal-run-time)))
                   (dotimes (,<i> ,<iterations> (/ (- (get-internal-run-time)
