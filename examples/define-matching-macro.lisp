@@ -13,6 +13,7 @@
           (destructuring-match ,<whole> ,@the-clauses)))
       (the-clauses
        `(defmacro ,name (&whole ,<whole> &rest ,<junk>)
+          (declare (ignore ,<junk>))
           (destructuring-match ,<whole> ,@the-clauses))))))
 
 (define-matching-macro bind*
