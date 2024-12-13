@@ -4,7 +4,7 @@ This covers the case where you are using Quicklisp, but `dsm` is not yet in it a
 
 - [dsm](https://tfeb.github.io/dsm/) via `git clone https://github.com/tfeb/dsm.git`;
 - [TFEB.ORG Lisp tools](https://tfeb.github.io/tfeb-lisp-tools/), at least version 8.0.0, via `git clone https://github.com/tfeb/tfeb-lisp-tools.git`;
-- [TFEB.ORG Lisp hax](https://tfeb.github.io/tfeb-lisp-hax/), at least version 5.0.0, via `git clone  https://github.com/tfeb/tfeb-lisp-hax.git`.
+- [TFEB.ORG Lisp hax](https://tfeb.github.io/tfeb-lisp-hax/), at least version 8.8.0, via `git clone  https://github.com/tfeb/tfeb-lisp-hax.git`.
 
 Given this, `(ql:quickload "org.tfeb.dsm")` should just work.  The tests system is `"org.tfeb.dsm/test"`, and the benchmark system is `"org.tfeb.dsm/bench"`.
 

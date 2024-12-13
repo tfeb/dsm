@@ -36,7 +36,7 @@
         (first effective)
       `(and ,@effective))))
 
-(defmacro destructuring-match (form &body clauses)
+(defmacro destructuring-match (form &body clauses &environment environment)
   "Match FORM against CLAUSES, returning the values of the matching clause
 
 Each clause in clauses is ({<dsm-ll> | OTHERWISE | T} [<guard>] . <decls/body>).
@@ -87,7 +87,8 @@ decide if the clause matched."
                                           (if ,guard
                                               (multiple-value-call ,<done>
                                                 (progn ,@body))
-                                            (go ,<next>))))
+                                            (go ,<next>)))
+                                        :environment environment)
                                       ,<form>
                                       (lambda (message arguments)
                                         (declare (ignore message arguments))

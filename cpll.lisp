@@ -50,11 +50,12 @@
 (defun fail (failure-continuation &optional (argument "failed") &rest args)
   (funcall failure-continuation argument args))
 
-(defun canonicalize-declarations (declarations)
+(defun canonicalize-declarations (declarations &optional (environment nil))
   ;; Turn DECLARATIONS into a larger set which affect at most one
-  ;; variable each.  This is safe, but intentianally does not even try
-  ;; to hack (declare (integer ...)) as there's no reliable way of
-  ;; even knowing what is a type specifier.
+  ;; variable each.  I think this is safe: it relies on
+  ;; VALID-TYPE-SPECIFIER-P, which see, to be correct for symbols, and
+  ;; on the fact that any declaration where the specifier is a cons is
+  ;; a type specifier, which I believe to be true.
   (collecting
     (dolist (decl declarations)
       (dolist (dspec (rest decl))
@@ -64,6 +65,13 @@
            (destructuring-bind (tp . vars) (rest dspec)
              (dolist (v vars)
                (collect `(declare (type ,tp ,v))))))
+          ((list*-matches #'consp (list-of (var)))
+           ;; a declaration identifier which is a cons is a type
+           ;; specifier, especially if all the other elements of the
+           ;; declaration are variables
+           (destructuring-bind (tp . vars) dspec
+             (dolist (v vars)
+               (collect `(declare (type ,tp ,v))))))
           ((head-matches (some-of (is 'ignore)
                                   (is 'ignorable)
                                   (is 'special)
@@ -71,21 +79,32 @@
            (destructuring-bind (d . vars) dspec
              (dolist (v vars)
                (collect `(declare (,d ,v))))))
+          ((list*-matches (all-of
+                           #'symbolp
+                           (lambda (ts)
+                             (valid-type-specifier-p ts environment)))
+                          (list-of (var)))
+           (print "here")
+           ;; A symbol which is a type specifier
+           (destructuring-bind (ts . vars) dspec
+             (dolist (v vars)
+               (collect `(declare (type ,ts ,v))))))
           (otherwise
            ;; No idea
            (collect `(declare ,dspec))))))))
 
 (defun declarations-for (variables canonical-declarations)
   ;; Return a list of declarations affecting VARs and the remaining
-  ;; declarations.  Again this *won't* deal with (declare (integer
-  ;; x)).
+  ;; declarations.  This now does not need to worry about (declare
+  ;; (<type> x ...)), as this will have been ground out by
+  ;; CANONICALIZE-DECLARATIONS.
   (with-collectors (for-variables not-for-variables)
     (dolist (d canonical-declarations)
       (matching (second d)
         ((list-matches (some-of (is 'ignore)
                                 (is 'ignorable)
                                 (is 'special)
-                                  (is 'dynamic-extent))
+                                (is 'dynamic-extent))
                        (all-of (var)
                                (lambda (v) (member v variables))))
          (for-variables d))
@@ -95,8 +114,9 @@
           (otherwise
            (not-for-variables d))))))
 
-(defun compile-parsed-lambda-list (pll variables anonymous decls/body &optional
-                                       (pll-compilers *pll-compilers*))
+(defun compile-parsed-lambda-list (pll variables anonymous decls/body &key
+                                       (pll-compilers *pll-compilers*)
+                                       (environment nil))
   ;; compile a parsed lambda list, adding IGNORE declarations for
   ;; ANONYMOUS, and using DECLS/BODY as the body. VARS is not used currently
   (declare (ignore variables))
@@ -108,7 +128,7 @@
           (values (append (mapcar (lambda (anon)
                                     `(declare (ignore ,anon)))
                                   anonymous)
-                          (canonicalize-declarations decls))
+                          (canonicalize-declarations decls environment))
                   body))
       `(lambda (,<thing> ,<fail>)
          ,(iterate crl ((pllt pll) (rdecls cdecls) (next nil))
@@ -158,12 +178,15 @@
                ;; Can't happen absent bugs in parse-lambda-list
                (catastrophe "what even is ~S? (from ~S)" pllt pll))))))))
 
-(defun compile-lambda-list (ll decls/body &optional
-                               (pll-compilers *pll-compilers*))
+(defun compile-lambda-list (ll decls/body &key
+                               (pll-compilers *pll-compilers*)
+                               (environment nil))
   ;; This just exists so destructuring-bind doesn't have to care about
   ;; variables &c
   (multiple-value-bind (pll variables anonymous) (parse-lambda-list ll)
-    (compile-parsed-lambda-list pll variables anonymous decls/body pll-compilers)))
+    (compile-parsed-lambda-list pll variables anonymous decls/body
+                                :pll-compilers pll-compilers
+                                :environment environment)))
 
 (defmacro define-pll-compiler (name/in (clause-body <thing> <fail>)
                                        &body decls/forms)

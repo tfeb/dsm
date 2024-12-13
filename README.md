@@ -271,9 +271,16 @@ Declarations are 'raised' to where they belong by the compiler, so something lik
 
 Will do the right thing, and the guard clause will be within the scope of the declaration.
 
-However, **no attempt is made to recognise the alternative form of type declarations**: `(declare (integer y))` is simply not recognised at all.  That's because it's essentially not possible to reliably recognise that declarations of the form `(<something> ...)` are in fact type declarations at all because CL has no 'is this a type specifier?' predicate.  So if you want to declare types, use the long form[^7].
+The system *attempts* to deal with the short form of type declarations properly.  This is hard in CL because there is no predicate which tells you whether something is a valid type specifier or not.  It tries to solve this problem two ways:
 
-Other declaration types which affect variable bindings, such as `ignore`, `dynamic-extent` and so on, are also raised.
+- anything of the form `(declare (<x> <v> ...))` where `<x>` is *not* a symbol and all the `<v>`s are variable names is a type declaration, as declaration specifiers need to be symbols;
+- for anything of the form `(declare (<s> <v> ...))` where `<s>` is a symbol and the `<v>`s are variable names it relies (indirectly) on catching an error from `(subtypep <s> t <env>)` where `<env>` is the lexical environment object.
+
+The assumption behind the second case is that any valid type specifier should be a recognizable subtype of `t`.
+
+However, if you want to declare types, just use the long form[^7].
+
+Other standard declaration types which affect variable bindings, such as `ignore`, `dynamic-extent` and so on, are also raised.  If there are implementation-specific declarations which effect bindings they *won't* be raised.
 
 ### Dead code
 `dsm` can generate code like this as a particular case (this often happens when using `&rest` lists in particular):
@@ -362,7 +369,7 @@ What constitutes a blank variable is parameterized internally and could be made 
 
 ---
 
-Destructuring match is copyright 2022 by Tim Bradshaw.  See `LICENSE` for the license.
+Destructuring match is copyright 2022-2024 by Tim Bradshaw.  See `LICENSE` for the license.
 
 [^1]:	Almost equivalently: neither `destructuring-bind` not `destructuring-match` support the `&environment` lambda list keyword.
 
@@ -376,6 +383,6 @@ Destructuring match is copyright 2022 by Tim Bradshaw.  See `LICENSE` for the li
 
 [^6]:	Not her real name.
 
-[^7]:	I think you should always do this, anyway.
+[^7]:	I think you should always do this, anyway: the whole shorthand for type declarations is just a horrid mistake CL made, probably in the name of compatibility.
 
 [^8]:	Apocryphally it also outperforms some of those hairy pattern matchers which obsess about performance, although they obviously do a lot more than `dsm` does.

@@ -13,7 +13,7 @@
          :org.tfeb.hax.utilities
          :org.tfeb.hax.spam)
         :compile t)
- (("pkg" "low") :compile t))
+ ("low" :compile t))
 
 (in-package :org.tfeb.dsm/impl)
 
