@@ -21,7 +21,8 @@
    (:file "low")
    (:file "pll")
    (:file "cpll")
-   (:file "dsm")))
+   (:file "dsm")
+   (:file "extensions")))
 
 (defsystem "org.tfeb.dsm/test"
   :description "Destructuring match tests"

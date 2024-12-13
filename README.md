@@ -1,4 +1,4 @@
-# Destructuring match
+# [Destructuring match](https://github.com/tfeb/dsm "Destructuring match")
 Common Lisp doesn't have any pattern-matching facilities in the language.  A number have been written: [CLiki](https://www.cliki.net/pattern%20matching "CLiki pattern matching") has a list: Marco Antoniotti's [CL-UNIFICATION](https://gitlab.common-lisp.net/cl-unification/cl-unification "CL-UNIFICATION") is my favourite, as I used to be interested in unification grammars.  Many of these systems are quite general: they seek to be able to match very general objects to be extensible and to have very good performance.  This causes inevitable hair in their implementations, and also means that they often make doing something rather simple much harder than it needs to be.
 
 The simple thing that should be easy is providing a generalised version of `destructuring-bind`or, equivalently[^1], macro argument lists.  That's what `dsm` does, and that's *all* it does: if you understand `destructuring-bind` and `case` you can pretty much stop reading now: `destructuring-match` is pretty much `case` except that the cases are lambda lists for `destructuring-bind`.
@@ -98,7 +98,7 @@ Again,`dsm` is not intended as a general-purpose pattern matcher: all it does is
 	- `(otherwise ...)`;
 	- `(t ...)`.
 - For `<lambda-list>` see below.
-- `<guard>` is a form like `(<when/unless) expression ...)`, where `<when/unless>` is `:when` or `:unless`.
+- `<guard>` is a form like `(<when/unless> expression ...)`, where `<when/unless>` is `:when` or `:unless`.
 
 The lambda lists understood by `destructuring-match` are[^4] the same as the lambda lists understood by `destructuring-bind`, extended in two ways:
 
@@ -296,6 +296,57 @@ Since `dsm` is intended for use in macros I made no real attempt to worry about 
 ### Layers
 `dsm` contains an 'implementation' layer which has its own package, and which may one day expose more of it with some documented interface.  Currently this interface is entirely internal to `dsm` and may change at any time.
 
+## Extensions
+`dsm` has some extensions (currently one) which live in the package `org.tfeb.dsm/extensions`.
+
+### `literals`: check if some variables are literals
+If you are trying to match against some syntax which contains 'noise words', then you can end up writing code like this
+
+```lisp
+(destructuring-match form
+  ((a -> b)
+   (:when (eql -> '->))
+   ...)
+  ...)
+```
+
+`literals` helps with this.  You can write, instead:
+
+```lisp
+(destructuring-match form
+  ((a -> b)
+   (:when (literals ->))
+   ...)
+  ...)
+```
+
+or, more generally
+
+```lisp
+(destructuring-match form
+  ((a = b -> c)
+   (:when (literals = ->))
+   ...)
+  ...)
+```
+
+which is why it is `literals` not `literal`.  Each argument to `literals` can be one of two things.
+
+- A variable name, which is checked to be bound to its own name.
+- A list of the form `(<v> &key as test)` where, `<v>` is a variable name, `as` is a list which it is matched against and `test` is the test function. `as` defaults to a list of the variable's name, and `test` to `#'eql`.  Both `as` and `test` are evaluated.  In this case the variable must be both a symbol and it must match an element of the list under `test`.
+
+The second form allows things like
+
+```lisp
+(destructuring-match form
+  ((a in b)
+   (:when (literals (in :test #'string=)))
+   ...)
+  ...)
+```
+
+which will test that `in` is bound to any symbol whose name is `"IN"`.
+
 ## Other notes
 'Lambda lists' which are symbols happened by mistake (there's what is essentially an error in the recognizer where it's looking for dotted lambda lists), but they are in fact so useful that I decided this was a feature, not a bug.
 
@@ -305,7 +356,7 @@ Since `dsm` is intended for use in macros I made no real attempt to worry about 
 What constitutes a blank variable is parameterized internally and could be made user-configurable.  On the other hand everybody elsr uses `_`, so I am not sure  any useful purpose would be served by doing so.
 
 ## Package, module, feature, dependencies
-`dsm` lives in `org.tfeb.dsm` and provides `:org.tfeb.dsm`.  There is an ASDF system definition for both it and its tests.
+`dsm` lives in `org.tfeb.dsm` and provides `:org.tfeb.dsm`.  The extension package is `org.tfeb.dsm/extensions`.  There is an ASDF system definition for both it and its tests.
 
 `dsm` depends on a fair number of other things I have written: if you have a recent Quicklisp distribution then it *should* know about all of them.  At least, by the time `dsm` makes it into Quicklisp it should.  If not, you need at least version 5 of [my CL hax](https://tfeb.github.io/tfeb-lisp-hax/ "TFEB.ORG Lisp hax"), and at least version 8 of [my CL tools](https://tfeb.github.io/tfeb-lisp-tools/ "TFEB.ORG Lisp tools").
 

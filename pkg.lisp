@@ -48,3 +48,12 @@
    #:dsm-error/mine
    #:destructuring-match))
 
+(defpackage :org.tfeb.dsm/extensions
+    (:use :cl)
+    (:use
+     :org.tfeb.hax.spam
+     :org.tfeb.dsm
+     :org.tfeb.dsm/impl)
+    (:export
+     #:literals))
+
