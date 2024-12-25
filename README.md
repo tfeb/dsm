@@ -5,6 +5,28 @@ The simple thing that should be easy is providing a generalised version of `dest
 
 `dsm`'s whole purpose in life is to allow you to pattern match against *source code*: it does not, for instance, support matching against instances of general classes, because instances of general classes do not occur in source code.  It is a tool to make doing what Lisp does best easier: implementing programming languages built on Lisp.  *And that is all it does.*  Because this is all it is meant to do,`dsm` cares about correctness, but it does not care at all about performance: the performance of macroexpansion never matters[^2].
 
+## Contents
+- [An example](#an-example)
+- [The interface](#the-interface)
+- [Conditions](#conditions)
+- [Some simple examples](#some-simple-examples)
+- [Another example: define-destructuring-macro](#another-example-define-destructuring-macro)
+- [A final example: destructuring-bind](#a-final-example-destructuring-bind)
+- [Notes on the implementation](#notes-on-the-implementation)
+	- [Lambda lists](#lambda-lists)
+	- [Structure sharing](#structure-sharing)
+	- [&rest lists may not be](#rest-lists-may-not-be)
+	- [Declarations](#declarations)
+	- [Dead code](#dead-code)
+	- [The lambda list parser & compiler](#the-lambda-list-parser--compiler)
+	- [Performance](#performance)
+	- [Layers](#layers)
+- [Extensions](#extensions)
+	- [literals: check if some variables are literals](#literals-check-if-some-variables-are-literals)
+- [Other notes](#other-notes)
+- [Lost futures](#lost-futures)
+- [Package, module, feature, dependencies](#package-module-feature-dependencies)
+
 ## An example
 As an example, let's consider a macro where there are a few possible variations on the syntax:
 
@@ -271,12 +293,7 @@ Declarations are 'raised' to where they belong by the compiler, so something lik
 
 Will do the right thing, and the guard clause will be within the scope of the declaration.
 
-The system *attempts* to deal with the short form of type declarations properly.  This is hard in CL because there is no predicate which tells you whether something is a valid type specifier or not.  It tries to solve this problem two ways:
-
-- anything of the form `(declare (<x> <v> ...))` where `<x>` is *not* a symbol and all the `<v>`s are variable names is a type declaration, as declaration specifiers need to be symbols;
-- for anything of the form `(declare (<s> <v> ...))` where `<s>` is a symbol and the `<v>`s are variable names it relies (indirectly) on catching an error from `(subtypep <s> t <env>)` where `<env>` is the lexical environment object.
-
-The assumption behind the second case is that any valid type specifier should be a recognizable subtype of `t`.
+The system should now deal with the short form of type declarations properly.  This is hard in CL because there is no predicate which tells you whether something is a valid type specifier or not.  It now works by using `canonicalize-declaration-specifier` which should reliably deal with these.
 
 However, if you want to declare types, just use the long form[^7].
 
@@ -365,7 +382,7 @@ What constitutes a blank variable is parameterized internally and could be made 
 ## Package, module, feature, dependencies
 `dsm` lives in `org.tfeb.dsm` and provides `:org.tfeb.dsm`.  The extension package is `org.tfeb.dsm/extensions`.  There is an ASDF system definition for both it and its tests.
 
-`dsm` depends on a fair number of other things I have written: if you have a recent Quicklisp distribution then it *should* know about all of them.  At least, by the time `dsm` makes it into Quicklisp it should.  If not, you need at least version 5 of [my CL hax](https://tfeb.github.io/tfeb-lisp-hax/ "TFEB.ORG Lisp hax"), and at least version 8 of [my CL tools](https://tfeb.github.io/tfeb-lisp-tools/ "TFEB.ORG Lisp tools").
+`dsm` depends on a fair number of other things I have written: if you have a recent Quicklisp distribution then it *should* know about all of them.  At least, by the time `dsm` makes it into Quicklisp it should.  If not, you need at least version 9 of [my CL hax](https://tfeb.github.io/tfeb-lisp-hax/ "TFEB.ORG Lisp hax"), and at least version 8 of [my CL tools](https://tfeb.github.io/tfeb-lisp-tools/ "TFEB.ORG Lisp tools").
 
 ---
 

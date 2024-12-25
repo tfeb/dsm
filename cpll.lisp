@@ -52,46 +52,24 @@
 
 (defun canonicalize-declarations (declarations &optional (environment nil))
   ;; Turn DECLARATIONS into a larger set which affect at most one
-  ;; variable each.  I think this is safe: it relies on
-  ;; VALID-TYPE-SPECIFIER-P, which see, to be correct for symbols, and
-  ;; on the fact that any declaration where the specifier is a cons is
-  ;; a type specifier, which I believe to be true.
+  ;; variable each.  I think this is safe: see
+  ;; CANONICALIZE-DECLARATION-SPECIFIER.
   (collecting
     (dolist (decl declarations)
       (dolist (dspec (rest decl))
-        (matching dspec
-          ((head-matches (is 'type) (any))
-           ;; obvious type declaration
-           (destructuring-bind (tp . vars) (rest dspec)
-             (dolist (v vars)
-               (collect `(declare (type ,tp ,v))))))
-          ((list*-matches #'consp (list-of (var)))
-           ;; a declaration identifier which is a cons is a type
-           ;; specifier, especially if all the other elements of the
-           ;; declaration are variables
-           (destructuring-bind (tp . vars) dspec
-             (dolist (v vars)
-               (collect `(declare (type ,tp ,v))))))
-          ((head-matches (some-of (is 'ignore)
-                                  (is 'ignorable)
-                                  (is 'special)
-                                  (is 'dynamic-extent)))
-           (destructuring-bind (d . vars) dspec
-             (dolist (v vars)
-               (collect `(declare (,d ,v))))))
-          ((list*-matches (all-of
-                           #'symbolp
-                           (lambda (ts)
-                             (valid-type-specifier-p ts environment)))
-                          (list-of (var)))
-           (print "here")
-           ;; A symbol which is a type specifier
-           (destructuring-bind (ts . vars) dspec
-             (dolist (v vars)
-               (collect `(declare (type ,ts ,v))))))
-          (otherwise
-           ;; No idea
-           (collect `(declare ,dspec))))))))
+        (destructuring-bind (identifier . rest) (canonicalize-declaration-specifier
+                                                 dspec environment)
+          (case identifier
+            (type
+             (destructuring-bind (type . vars) rest
+               (dolist (var vars)
+                 (collect `(declare (type ,type ,var))))))
+            ((ignore ignorable special dynamic-extent)
+             (dolist (var rest)
+               (collect `(declare (,identifier ,var)))))
+            (otherwise
+             ;; No idea
+             (collect `(declare ,dspec)))))))))
 
 (defun declarations-for (variables canonical-declarations)
   ;; Return a list of declarations affecting VARs and the remaining
